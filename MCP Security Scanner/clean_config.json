@@ -1,0 +1,54 @@
+# R10 — Supply chain
+rules:
+  - id: BS-R10-001
+    risk_class: R10
+    severity: medium
+    title: Unpinned package version (@latest)
+    applies_to: arg
+    detector: regex
+    pattern: '@latest$'
+    explanation: >
+      '@latest' means the code you run tomorrow is whatever the publisher (or
+      whoever compromises them) ships tonight. Version pinning is your only
+      integrity control for npx/uvx-launched servers.
+    remediation: 'Pin to an exact version, e.g. package@1.4.2, and update deliberately.'
+    mappings: {owasp_llm10: "LLM03 Supply Chain", mitre_atlas: "AML.T0010", nist_ai_rmf: "GOVERN"}
+
+  - id: BS-R10-002
+    risk_class: R10
+    severity: medium
+    title: Package executed directly from a remote URL or gist
+    applies_to: arg
+    detector: regex
+    pattern: '^https?://(gist\.github|raw\.githubusercontent|pastebin|tinyurl|bit\.ly)'
+    explanation: >
+      Executing server code straight from a mutable URL gives the URL owner
+      standing code execution on your machine with no audit trail.
+    remediation: Install from a registry with a pinned version, or vendor the code and review it.
+    mappings: {owasp_llm10: "LLM03 Supply Chain", mitre_atlas: "AML.T0010", nist_ai_rmf: "GOVERN"}
+
+  - id: BS-R10-003
+    risk_class: R10
+    severity: low
+    title: Auto-confirm flag on package runner
+    applies_to: arg
+    detector: regex
+    pattern: '^(-y|--yes)$'
+    explanation: >
+      '-y' silently accepts package installation, including any install scripts,
+      every time the client starts the server.
+    remediation: Pre-install the package explicitly and point the config at the installed binary.
+    mappings: {owasp_llm10: "LLM03 Supply Chain", mitre_atlas: "AML.T0010", nist_ai_rmf: "GOVERN"}
+
+  - id: BS-R10-004
+    risk_class: R10
+    severity: high
+    title: Remote MCP server over unencrypted HTTP
+    applies_to: url
+    detector: regex
+    pattern: '^http://(?!localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])'
+    explanation: >
+      Tool definitions and every tool result travel this connection in plaintext.
+      Anyone on-path can read them — and rewrite them (a live rug pull).
+    remediation: Use https, or an SSH tunnel for genuinely local-network servers.
+    mappings: {owasp_llm10: "LLM03 Supply Chain", mitre_atlas: "AML.T0010", nist_ai_rmf: "GOVERN"}

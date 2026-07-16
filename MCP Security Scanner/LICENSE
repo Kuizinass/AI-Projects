@@ -1,0 +1,51 @@
+"""Installation-level grading.
+
+Deliberately opinionated: any critical finding caps the grade at D, because a
+polished average must never launder a critical risk. Full granularity is always
+available in the JSON output for teams that set their own thresholds.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass
+
+from blastscope.models import Finding, Severity
+
+GRADE_BANDS = [(90, "A"), (75, "B"), (60, "C"), (40, "D"), (0, "F")]
+
+
+@dataclass
+class Assessment:
+    score: int
+    grade: str
+    verdict: str
+    counts: dict[str, int]
+
+
+def _verdict(findings: list[Finding], grade: str) -> str:
+    if not findings:
+        return ("No known risk patterns detected. This means 'nothing found', "
+                "not 'safe' — review the threat model for what v0.1 cannot see.")
+    worst = findings[0]
+    by_sev = [f for f in findings if f.severity in (Severity.CRITICAL, Severity.HIGH)]
+    if worst.severity == Severity.CRITICAL:
+        return (f"Critical exposure via '{worst.server}' ({worst.title.lower()}). "
+                f"Treat this installation as compromised-by-default until remediated.")
+    if by_sev:
+        return (f"{len(by_sev)} high-impact finding(s), led by '{worst.server}': "
+                f"{worst.title.lower()}. Remediate before trusting this installation "
+                f"with sensitive data.")
+    return f"Grade {grade}: hygiene issues only, but hygiene is how real incidents start."
+
+
+def assess(findings: list[Finding]) -> Assessment:
+    counts = {s.value: 0 for s in Severity}
+    for f in findings:
+        counts[f.severity.value] += 1
+
+    score = max(0, 100 - sum(f.severity.weight for f in findings))
+    grade = next(g for threshold, g in GRADE_BANDS if score >= threshold)
+
+    if counts["critical"] > 0 and grade in ("A", "B", "C"):
+        grade = "D"
+
+    return Assessment(score=score, grade=grade, verdict=_verdict(findings, grade), counts=counts)
