@@ -26,7 +26,7 @@ A–F with findings mapped to OWASP LLM Top 10, MITRE ATLAS, and NIST AI RMF.
 Built for security teams governing AI agents *and* anyone who wants to experiment
 with MCP safely.
 
-→ [Full documentation]([https://github.com/Kuizinass/AI-Projects/tree/main/MCP-Security-Scanner])
+→ [Full documentation](https://github.com/Kuizinass/AI-Projects/tree/main/MCP-Security-Scanner)
 
 ### 🔒 Production AI
 
