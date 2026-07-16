@@ -2,17 +2,89 @@
 
 A collection of AI and machine learning projects spanning deep learning with TensorFlow, computer vision, natural language processing, time series forecasting, and production-grade AI security tooling.
 
-Built by [Marius Poskus](https://mpcybersecurity.co.uk) — CISM, fractional CISO.
+Built by [Marius Poskus](https://mpcybersecurity.co.uk) — CISO operating at security and AI intersection
 
 ---
 
 ## Projects
+
+## 🛡️ BlastScope — MCP Security Scanner
+
+> **See your agent's blast radius before an attacker does.**
+
+MCP servers are being installed the way browser toolbars were in 2005 — copy a
+config, restart the client, hope for the best. Most scanners ask *"is this server
+misconfigured?"* BlastScope asks the question a CISO has to answer:
+
+**"If the model driving this installation is compromised by a single prompt
+injection, what is the total blast radius?"**
+
+It assesses the *composition* of everything installed — not servers in isolation —
+detecting lethal trifecta patterns (private data + untrusted content + exfiltration
+path), tool poisoning, rug pulls, and excessive agency, then grades the installation
+A–F with findings mapped to OWASP LLM Top 10, MITRE ATLAS, and NIST AI RMF.
+Built for security teams governing AI agents *and* anyone who wants to experiment
+with MCP safely.
+
+→ [Full documentation](https://github.com/Kuizinass/AI-Projects/tree/main/mcp-security-scanner)
 
 ### 🔒 Production AI
 
 | Project | Description | Stack |
 |---------|-------------|-------|
 | [MP Cyber Security Advisor](./mcp-security-advisor/) | Autonomous AI security advisor — connects Claude to Defender XDR, Sentinel, Purview, Intune, Defender for Cloud, and M365 Admin Center. 28 tools with a risk engine that auto-remediates low-risk issues and escalates to Teams. | Python, FastMCP, Azure, Microsoft Graph API |
+
+## Project: MP Cyber Security Advisor
+
+The most recent project in this repo takes a different direction — moving from learning notebooks into a **production-deployed AI system**.
+
+The [MP Cyber Security Advisor](./mcp-security-advisor/) is a **Model Context Protocol (MCP) server** hosted on Azure that gives Claude AI direct access to the full Microsoft security stack. Instead of manually checking five different security portals, you talk to Claude and it queries, analyses, and acts across your environment in a single conversation.
+
+**What it connects to:**
+- Microsoft Defender XDR — incidents, alerts, advanced hunting, CVEs
+- Microsoft Sentinel — incidents, KQL queries, analytic rules
+- Microsoft Defender for Cloud — recommendations, compliance posture
+- Microsoft Intune — device compliance, configuration policies
+- Microsoft Purview — DLP alerts, sensitivity labels
+- M365 Admin Center — MFA status, Conditional Access, tenant settings
+- Microsoft Secure Score — controls and improvement opportunities
+
+**Risk engine:**
+
+Every action the AI proposes goes through a scored risk gate before anything is executed:
+
+| Score | Level | What happens |
+|-------|-------|-------------|
+| 0–30 | LOW | Auto-executed immediately |
+| 31–70 | MEDIUM | Teams approval card sent to analyst |
+| 71–100 | HIGH / CRITICAL | Escalated to analyst, never executed |
+
+**Example conversations with Claude:**
+> *"What is our Secure Score and what are the top 5 controls to fix first?"*
+
+> *"Are there any High severity incidents open in Defender XDR right now?"*
+
+> *"Check MFA status — which admins don't have MFA registered?"*
+
+> *"Run a KQL query in Sentinel for failed logins from outside the UK in the last 24 hours."*
+
+→ [Full documentation and deployment guide](./mcp-security-advisor/README.md)
+
+---
+
+## Tech Stack Summary
+
+| Area | Technologies |
+|------|-------------|
+| Deep Learning | TensorFlow 2.x, Keras, EfficientNet, ResNet |
+| Computer Vision | CNNs, Transfer Learning, TensorFlow Datasets, Food101 |
+| NLP | Text embeddings, RNNs, LSTMs, Conv1D, PubMed 200k RCT |
+| Time Series | Windowing, N-BEATS, LSTMs, Bitcoin price data |
+| Production AI | Python, FastMCP, Azure Container Apps, Microsoft Graph API |
+| Infrastructure | Azure Bicep, Managed Identity, Key Vault, Sentinel |
+| Development | Google Colab, Jupyter, pytest |
+
+---
 
 ---
 
@@ -67,61 +139,10 @@ End-to-end projects applying the above techniques to real-world problems.
 
 ---
 
-## Featured Project: MP Cyber Security Advisor
-
-The most recent project in this repo takes a different direction — moving from learning notebooks into a **production-deployed AI system**.
-
-The [MP Cyber Security Advisor](./mcp-security-advisor/) is a **Model Context Protocol (MCP) server** hosted on Azure that gives Claude AI direct access to the full Microsoft security stack. Instead of manually checking five different security portals, you talk to Claude and it queries, analyses, and acts across your environment in a single conversation.
-
-**What it connects to:**
-- Microsoft Defender XDR — incidents, alerts, advanced hunting, CVEs
-- Microsoft Sentinel — incidents, KQL queries, analytic rules
-- Microsoft Defender for Cloud — recommendations, compliance posture
-- Microsoft Intune — device compliance, configuration policies
-- Microsoft Purview — DLP alerts, sensitivity labels
-- M365 Admin Center — MFA status, Conditional Access, tenant settings
-- Microsoft Secure Score — controls and improvement opportunities
-
-**Risk engine:**
-
-Every action the AI proposes goes through a scored risk gate before anything is executed:
-
-| Score | Level | What happens |
-|-------|-------|-------------|
-| 0–30 | LOW | Auto-executed immediately |
-| 31–70 | MEDIUM | Teams approval card sent to analyst |
-| 71–100 | HIGH / CRITICAL | Escalated to analyst, never executed |
-
-**Example conversations with Claude:**
-> *"What is our Secure Score and what are the top 5 controls to fix first?"*
-
-> *"Are there any High severity incidents open in Defender XDR right now?"*
-
-> *"Check MFA status — which admins don't have MFA registered?"*
-
-> *"Run a KQL query in Sentinel for failed logins from outside the UK in the last 24 hours."*
-
-→ [Full documentation and deployment guide](./mcp-security-advisor/README.md)
-
----
-
-## Tech Stack Summary
-
-| Area | Technologies |
-|------|-------------|
-| Deep Learning | TensorFlow 2.x, Keras, EfficientNet, ResNet |
-| Computer Vision | CNNs, Transfer Learning, TensorFlow Datasets, Food101 |
-| NLP | Text embeddings, RNNs, LSTMs, Conv1D, PubMed 200k RCT |
-| Time Series | Windowing, N-BEATS, LSTMs, Bitcoin price data |
-| Production AI | Python, FastMCP, Azure Container Apps, Microsoft Graph API |
-| Infrastructure | Azure Bicep, Managed Identity, Key Vault, Sentinel |
-| Development | Google Colab, Jupyter, pytest |
-
----
 
 ## About
 
-**Marius Poskus** — CISM, vCISO / Fractional CISO
+**Marius Poskus** — CISO
 
 - Website: [mpcybersecurity.co.uk](https://mpcybersecurity.co.uk)
 - Email: mp@mpcybersecurity.co.uk
