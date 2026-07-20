@@ -37,3 +37,12 @@ not be merged. Run `pytest` before opening a PR.
 - Deterministic first. No network calls in the default path.
 - Explainable. Every finding cites evidence, a fix, and a framework mapping.
 - Never leak secrets into output — set `redact: true`.
+
+## Composition rules (R3, R5, R12)
+
+Trifecta, rug-pull, and excessive-agency detection live in `composition.py`,
+`baseline.py`, and `capabilities.py` — not YAML — because they reason across the
+whole installation, not a single field. If you want to extend capability
+classification (the signals that decide whether a tool grants private-data,
+untrusted-input, exfil, or destructive capability), edit the `_SIGNALS` table in
+`capabilities.py` and add a test to `tests/test_composition.py`.

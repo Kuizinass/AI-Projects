@@ -1,0 +1,29 @@
+# R8 — Transport & auth weaknesses
+rules:
+  - id: BS-R8-001
+    risk_class: R8
+    severity: high
+    title: Remote server reachable without authentication
+    applies_to: url
+    detector: regex
+    pattern: '^https?://(?!localhost|127\.0\.0\.1|\[::1\])[^\s?]+(?<!token)(?<!key)$'
+    explanation: >
+      A remote MCP endpoint with no token or key in its configuration may be
+      unauthenticated. Anyone who can reach the URL can enumerate and invoke its
+      tools. Confirm the server enforces auth out-of-band.
+    remediation: Require an auth token/OAuth on the server and reference the secret from the OS keychain.
+    mappings: {owasp_llm10: "LLM08 Excessive Agency", mitre_atlas: "AML.T0049", nist_ai_rmf: "GOVERN"}
+
+  - id: BS-R8-002
+    risk_class: R8
+    severity: critical
+    title: Plaintext HTTP transport for remote server
+    applies_to: url
+    detector: regex
+    pattern: '^http://(?!localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])'
+    explanation: >
+      Tool definitions and every tool result cross this link in cleartext. An
+      on-path attacker can both read them and rewrite them — silently substituting
+      tool definitions (a live rug pull) or tampering with results the model trusts.
+    remediation: Switch to https. For genuinely local-network servers, tunnel over SSH/TLS.
+    mappings: {owasp_llm10: "LLM03 Supply Chain", mitre_atlas: "AML.T0010", nist_ai_rmf: "GOVERN"}

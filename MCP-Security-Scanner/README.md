@@ -49,7 +49,7 @@ blastscope scan
 Sixty seconds later:
 
 ```
-BlastScope v0.1 — Installation Assessment
+BlastScope v0.5 — Installation Assessment
 ──────────────────────────────────────────
 Clients found:   Claude Desktop, Cursor
 Servers found:   7        Tools exposed: 43
@@ -103,34 +103,28 @@ R3 and R12 are why this project exists. Everything else is table stakes done pro
 ## For security teams
 
 ```bash
-# Assess against an organisational policy baseline
-blastscope scan --policy corp-baseline.yaml
+# CI gate: fail the build on high-severity findings
+blastscope scan --fail-on high
 
-# CI gate with SARIF for the GitHub Security tab
-blastscope scan --format sarif -o results.sarif --fail-on high
+# Live handshake — enumerate real tools/resources/prompts, not just declared config
+blastscope scan --live
 
-# Continuous rug-pull / drift monitoring against a pinned baseline
-blastscope watch --interval 24h
+# Record a rug-pull baseline now, then re-run on a schedule (cron/CI) to catch drift
+blastscope scan --baseline
+blastscope watch
+
+# Pre-install check before anything touches a client config
+blastscope inspect npx:@vendor/mcp-server-foo
 
 # The one your CISO actually wants:
-blastscope report --format boardroom -o ai-agent-risk.html
+blastscope scan --format html -o ai-agent-risk.html
 ```
 
-`--format boardroom` produces a one-page HTML/PDF narrative: what the installation can do, what the realistic attack path is, what it would cost, and the top three remediations — written in risk-register language, not stack traces. Drop it into your GRC pack as-is.
+`--format html` produces a one-page narrative report: what the installation can do, what the realistic attack path is, and the top remediations — written in risk-register language, not stack traces. See [`examples/sample-report.html`](examples/sample-report.html) for a full sample, or the screenshot below. Drop it into your GRC pack as-is.
 
-Policy files let you express organisational rules that per-server scanning can't:
+![Sample boardroom report](examples/sample-boardroom-report.png)
 
-```yaml
-# corp-baseline.yaml
-deny_capability_combinations:
-  - [private_data_read, network_egress_unbounded]   # no trifecta components
-require:
-  version_pinning: true
-  destructive_action_annotations: true
-allow_servers:
-  - "@modelcontextprotocol/*"
-  - "@internal/*"
-```
+A policy engine (org-defined capability rules, `blastscope scan --policy corp-baseline.yaml`) and SARIF output for the GitHub Security tab are planned for v1.0 — see [Roadmap](#roadmap).
 
 ## For experimenters
 
@@ -154,7 +148,7 @@ You don't need a security team to use this. If you're learning MCP, building age
 | Source | Status |
 |--------|--------|
 | MCP client configs (Claude Desktop / Claude Code, Cursor, VS Code, Windsurf, `--config <path>`) | ✅ v0.1 |
-| MCP live handshake (tool/resource/prompt enumeration) | 🔜 v0.5 |
+| MCP live handshake (tool/resource/prompt enumeration) | ✅ v0.5 |
 | OpenAI function-calling schemas | 🔜 v1.0 |
 | LangChain tool definitions | 🔜 v1.0 |
 | CrewAI / AutoGen | Planned |
@@ -164,8 +158,8 @@ All adapters normalise into one internal capability model; the rule engine is fr
 
 ## Roadmap
 
-- **v0.1** — static config scanning, R1/R4/R7/R9/R10, severity-based posture, terminal + JSON
-- **v0.5** — live handshake, composition engine (R3/R12), `inspect`, drift baselines, HTML + boardroom report
+- **v0.1** — static config scanning, R1/R4/R7/R9/R10, severity-based posture, terminal + JSON ✅
+- **v0.5 (current)** — live handshake, composition engine (R3/R12), R2/R5/R8/R11 rules, `inspect` pre-install check, rug-pull drift baselines, HTML boardroom report
 - **v1.0** — policy engine, SARIF + GitHub Action, OpenAI/LangChain adapters, optional LLM pass
 - **Beyond** — runtime guardrail mode reusing the same rule engine, community rule registry, AI-BOM export
 

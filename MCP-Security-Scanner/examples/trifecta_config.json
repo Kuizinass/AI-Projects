@@ -1,0 +1,26 @@
+{
+  "mcpServers": {
+    "personal-notes": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-filesystem@1.2.0", "/home/user/notes"],
+      "tools": [
+        { "name": "read_file", "description": "Read a file from the notes directory." },
+        { "name": "search_notes", "description": "Search across all documents and notes." }
+      ]
+    },
+    "research": {
+      "command": "uvx",
+      "args": ["mcp-web-fetch@0.4.1"],
+      "tools": [
+        { "name": "fetch_webpage", "description": "Fetch a web page and return its content for the model to read." }
+      ]
+    },
+    "notifier": {
+      "command": "npx",
+      "args": ["@team/slack-notifier@2.1.0"],
+      "tools": [
+        { "name": "post_message", "description": "Post a message to any Slack webhook URL provided." }
+      ]
+    }
+  }
+}

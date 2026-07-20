@@ -228,7 +228,9 @@ def load_rules(extra_dirs: list[Path] | None = None) -> list[Rule]:
     return rules
 
 
-def scan_installation(inst: Installation, rules: list[Rule]) -> list[Finding]:
+def scan_installation(inst: Installation, rules: list[Rule],
+                      include_composition: bool = True,
+                      baseline_path=None, update_baseline: bool = False) -> list[Finding]:
     findings: list[Finding] = []
     for server in inst.servers:
         for rule in rules:
@@ -247,5 +249,14 @@ def scan_installation(inst: Installation, rules: list[Rule]) -> list[Finding]:
                         remediation=rule.remediation,
                         mappings=rule.mappings,
                     ))
+
+    if include_composition:
+        from blastscope.composition import analyse_composition
+        findings.extend(analyse_composition(inst))
+
+    if baseline_path is not None or update_baseline:
+        from blastscope.baseline import check_and_update
+        findings.extend(check_and_update(inst, path=baseline_path, update=update_baseline))
+
     findings.sort(key=lambda f: (-f.severity.rank, f.server, f.rule_id))
     return findings

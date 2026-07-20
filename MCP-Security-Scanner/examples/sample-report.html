@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BlastScope report</title>
+<style>
+  :root { --ink:#1a1a1a; --muted:#5a6472; --line:#e2e2e2; --bg:#fafafa; }
+  * { box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+         color:var(--ink); background:var(--bg); margin:0; line-height:1.55; }
+  .wrap { max-width:860px; margin:0 auto; padding:40px 24px 80px; }
+  header.top { border-bottom:2px solid var(--ink); padding-bottom:16px; margin-bottom:28px; }
+  header.top h1 { margin:0; font-size:26px; letter-spacing:.5px; }
+  header.top .sub { color:var(--muted); font-size:13px; margin-top:4px; }
+  h2 { font-size:19px; margin:34px 0 12px; }
+  h3 { font-size:15px; margin:22px 0 8px; color:var(--muted); text-transform:uppercase;
+        letter-spacing:.5px; }
+  .exec { background:#fff; border:1px solid var(--line); border-radius:12px; padding:24px; }
+  .headline { font-size:17px; font-weight:500; margin:8px 0 18px; }
+  .metricline { display:flex; flex-wrap:wrap; gap:14px; align-items:center; font-size:13px;
+                 color:var(--muted); margin-bottom:8px; }
+  .posture { color:#fff; padding:4px 12px; border-radius:20px; font-weight:600; font-size:12px;
+              letter-spacing:.5px; }
+  ol.fixes li { margin:6px 0; }
+  .finding { background:#fff; border:1px solid var(--line); border-radius:10px;
+              margin:14px 0; overflow:hidden; }
+  .fhead { display:flex; align-items:center; gap:12px; padding:12px 16px;
+            border-bottom:1px solid var(--line); }
+  .sev { color:#fff; font-size:11px; font-weight:600; padding:3px 9px; border-radius:4px;
+          letter-spacing:.5px; }
+  .ftitle { font-weight:500; flex:1; }
+  .rid { color:var(--muted); font-size:12px; font-family:ui-monospace,monospace; }
+  .fbody { padding:8px 16px 14px; }
+  .frow { display:grid; grid-template-columns:96px 1fr; gap:12px; padding:5px 0;
+           font-size:14px; border-top:1px solid #f2f2f2; }
+  .frow:first-child { border-top:none; }
+  .frow .k { color:var(--muted); font-size:12px; text-transform:uppercase;
+              letter-spacing:.4px; padding-top:2px; }
+  .mono, .maps { font-family:ui-monospace,monospace; font-size:12.5px; word-break:break-word; }
+  .maps { color:var(--muted); }
+  footer { margin-top:40px; padding-top:16px; border-top:1px solid var(--line);
+            color:var(--muted); font-size:12px; }
+  .none { color:var(--muted); }
+</style></head>
+<body><div class="wrap">
+  <header class="top">
+    <h1>BlastScope</h1>
+    <div class="sub">MCP &amp; agentic AI installation assessment &middot; v0.5.0 &middot; 2026-07-20 12:52 UTC</div>
+  </header>
+  
+    <section class="exec">
+      <h2>Executive summary</h2>
+      <p class="headline">This installation contains a complete data-exfiltration chain. A single prompt injection could read private data and send it to an attacker. Treat as critical.</p>
+      <div class="metricline">
+        <span class="posture" style="background:#b3261e">
+          CRITICAL</span>
+        <span>3 servers, 4 tools assessed</span>
+        <span>1 critical &middot; 0 high &middot;
+              2 medium &middot; 0 low</span>
+      </div>
+      <h3>Top priorities</h3>
+      <ol class="fixes"><li><strong>Lethal trifecta present across installation.</strong> Break the chain: isolate the untrusted-input server into a separate client profile with no data/exfil tools, OR constrain the exfil tool with a URL allow-list, OR remove one leg entirely. You only need to sever one link.</li></ol>
+    </section>
+    
+  <h2>Findings (3)</h2>
+  
+    <article class="finding">
+      <div class="fhead">
+        <span class="sev" style="background:#b3261e">CRITICAL</span>
+        <span class="ftitle">Lethal trifecta present across installation</span>
+        <span class="rid">BS-R3-001</span>
+      </div>
+      <div class="fbody">
+        <div class="frow"><span class="k">Server</span><span>notifier, personal-notes, research &rarr; installation-wide</span></div>
+        <div class="frow"><span class="k">Evidence</span><span class="mono">private data: personal-notes.personal-notes (&#x27;filesystem&#x27;); notifier.notifier (&#x27;slack&#x27;) | untrusted input: research.research (&#x27;web-fetch&#x27;) | exfil: notifier.post_message (&#x27;Post a message to any Slack webhook&#x27;)</span></div>
+        <div class="frow"><span class="k">Why</span><span>This installation can (1) read private data, (2) ingest attacker-influenceable content, and (3) send data to an external destination. A single prompt injection in any fetched web page, email, or issue can chain these into data theft — no individual server has to be malicious. This is the highest-impact pattern in agentic AI and per-server scanners cannot see it.</span></div>
+        <div class="frow"><span class="k">Fix</span><span>Break the chain: isolate the untrusted-input server into a separate client profile with no data/exfil tools, OR constrain the exfil tool with a URL allow-list, OR remove one leg entirely. You only need to sever one link.</span></div>
+        <div class="frow"><span class="k">Frameworks</span><span class="maps">owasp_llm10: LLM01 Prompt Injection + LLM02 + LLM06 &middot; mitre_atlas: AML.T0051 → AML.T0057 &middot; nist_ai_rmf: MANAGE</span></div>
+      </div>
+    </article>
+    
+
+    <article class="finding">
+      <div class="fhead">
+        <span class="sev" style="background:#c77700">MEDIUM</span>
+        <span class="ftitle">Aggregate agent reach spans 3 capability classes</span>
+        <span class="rid">BS-R12-002</span>
+      </div>
+      <div class="fbody">
+        <div class="frow"><span class="k">Server</span><span>3 servers &rarr; installation-wide</span></div>
+        <div class="frow"><span class="k">Evidence</span><span class="mono">capabilities present: private data, untrusted input, exfiltration</span></div>
+        <div class="frow"><span class="k">Why</span><span>Blast-radius summary: if the model driving this installation is compromised, these are the capability classes it can exercise. More classes in one agent means a larger single point of failure.</span></div>
+        <div class="frow"><span class="k">Fix</span><span>Apply least privilege across the installation. Split high-capability servers across separate client profiles so no single agent holds the full set.</span></div>
+        <div class="frow"><span class="k">Frameworks</span><span class="maps">owasp_llm10: LLM06 Excessive Agency &middot; nist_ai_rmf: GOVERN</span></div>
+      </div>
+    </article>
+    
+
+    <article class="finding">
+      <div class="fhead">
+        <span class="sev" style="background:#c77700">MEDIUM</span>
+        <span class="ftitle">Tool ingests untrusted external content</span>
+        <span class="rid">BS-R2-001</span>
+      </div>
+      <div class="fbody">
+        <div class="frow"><span class="k">Server</span><span>research &rarr; tools.fetch_webpage.description</span></div>
+        <div class="frow"><span class="k">Evidence</span><span class="mono">Fetch a web page</span></div>
+        <div class="frow"><span class="k">Why</span><span>This tool pulls external, attacker-influenceable content into the model&#x27;s context. That content can carry prompt-injection payloads. Exposure is not a vulnerability by itself, but it is the entry point for one — track it.</span></div>
+        <div class="frow"><span class="k">Fix</span><span>Ensure fetched content is treated as untrusted: no auto-execution of embedded instructions, and keep this server away from data-access and exfil tools.</span></div>
+        <div class="frow"><span class="k">Frameworks</span><span class="maps">owasp_llm10: LLM01 Prompt Injection &middot; mitre_atlas: AML.T0051 &middot; nist_ai_rmf: MEASURE</span></div>
+      </div>
+    </article>
+    
+  <footer>
+    Generated locally by BlastScope v0.5.0. This report reflects known risk
+    patterns in tool definitions and configuration; it assesses capability surface,
+    not server source code. A clean result means no known patterns were detected,
+    not a guarantee of safety.
+  </footer>
+</div></body></html>

@@ -1,0 +1,28 @@
+# R11 — Exfiltration vectors
+rules:
+  - id: BS-R11-001
+    risk_class: R11
+    severity: high
+    title: Tool accepts a caller-controlled URL or host
+    applies_to: tool_description
+    detector: regex
+    pattern: '\b(post|send|upload|put|publish|write)\b.{0,30}\b(to\s+)?(a|any|the\s+(specified|given|provided))\s+(url|host|endpoint|address|webhook)\b|arbitrary\s+(url|host|endpoint|webhook)'
+    explanation: >
+      A tool that sends data to a caller-specified destination is a general-purpose
+      egress primitive. Paired with any data-reading tool it completes an
+      exfiltration path — this is the exfil leg of the lethal trifecta.
+    remediation: Constrain destinations with an allow-list, or remove this tool from data-touching agents.
+    mappings: {owasp_llm10: "LLM06 Excessive Agency", mitre_atlas: "AML.T0056", nist_ai_rmf: "MANAGE"}
+
+  - id: BS-R11-002
+    risk_class: R11
+    severity: medium
+    title: Tool can write to shared or public locations
+    applies_to: tool_description
+    detector: regex
+    pattern: '\b(create|publish|post)\b.{0,20}\b(gist|paste|public\s+(repo|url|link|page)|tweet)\b|\bmake\b.{0,15}\bpublic\b'
+    explanation: >
+      Writing to a public location (gist, paste service, public repo, social post)
+      is an exfiltration channel that does not need an outbound HTTP tool.
+    remediation: Restrict publish targets, or keep this tool away from private-data access.
+    mappings: {owasp_llm10: "LLM06 Excessive Agency", mitre_atlas: "AML.T0056", nist_ai_rmf: "MANAGE"}

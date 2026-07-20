@@ -1,0 +1,31 @@
+# R2 — Injection surface exposure
+rules:
+  - id: BS-R2-001
+    risk_class: R2
+    severity: medium
+    title: Tool ingests untrusted external content
+    applies_to: tool_description
+    detector: regex
+    pattern: '\b(fetch|retrieve|read|scrape|download|browse)\b.{0,25}\b(url|web\s?page|website|http|external|internet|remote\s+content|feed)\b'
+    explanation: >
+      This tool pulls external, attacker-influenceable content into the model's
+      context. That content can carry prompt-injection payloads. Exposure is not a
+      vulnerability by itself, but it is the entry point for one — track it.
+    remediation: >
+      Ensure fetched content is treated as untrusted: no auto-execution of embedded
+      instructions, and keep this server away from data-access and exfil tools.
+    mappings: {owasp_llm10: "LLM01 Prompt Injection", mitre_atlas: "AML.T0051", nist_ai_rmf: "MEASURE"}
+
+  - id: BS-R2-002
+    risk_class: R2
+    severity: medium
+    title: Tool reads third-party user-generated content
+    applies_to: tool_description
+    detector: regex
+    pattern: '\b(read|get|list|fetch)\b.{0,25}\b(issue|ticket|comment|review|pull\s?request|email|inbox|message|mention)s?\b'
+    explanation: >
+      Issues, tickets, comments and emails are written by other people and can
+      contain injection payloads aimed at your agent. This is a common real-world
+      injection vector (e.g. a malicious GitHub issue body).
+    remediation: Treat this content as untrusted input; do not let the agent act on embedded instructions.
+    mappings: {owasp_llm10: "LLM01 Prompt Injection", mitre_atlas: "AML.T0051", nist_ai_rmf: "MEASURE"}
