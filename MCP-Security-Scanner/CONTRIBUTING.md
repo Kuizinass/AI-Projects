@@ -46,3 +46,16 @@ whole installation, not a single field. If you want to extend capability
 classification (the signals that decide whether a tool grants private-data,
 untrusted-input, exfil, or destructive capability), edit the `_SIGNALS` table in
 `capabilities.py` and add a test to `tests/test_composition.py`.
+
+## v1.0 subsystems
+
+- **Policy** (`policy.py`): organisational baselines as YAML. Add a check by
+  extending `evaluate_policy`; give it a `BS-POL-###` id and a test.
+- **Adapters** (`adapters/`): each framework normalises into `ServerConfig` +
+  `ToolDefinition`. A new framework adapter is usually <100 lines and needs no
+  engine changes — that's the point of the normalised model.
+- **Reporters** (`reporters/`): terminal, json, html, sarif. A new output format
+  is a `render(inst, findings, assessment) -> str` function.
+- **AI-BOM** (`aibom.py`) and **LLM pass** (`llm_pass.py`): governance export and
+  the opt-in semantic layer. The LLM pass must never send anything but tool names
+  and descriptions — there's a test that enforces this; keep it green.

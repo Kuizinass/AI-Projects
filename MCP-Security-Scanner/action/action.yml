@@ -1,0 +1,35 @@
+name: "BlastScope MCP Security Scan"
+description: "Scan MCP and agentic AI configurations for security risks, composition attacks, and policy violations."
+branding:
+  icon: "shield"
+  color: "red"
+inputs:
+  config:
+    description: "Path to the MCP config file to scan"
+    required: true
+  policy:
+    description: "Path to an organisational policy YAML (optional)"
+    required: false
+    default: ""
+  fail-on:
+    description: "Fail the build at/above this severity (critical|high|medium|low)"
+    required: false
+    default: "high"
+  sarif-output:
+    description: "Where to write the SARIF results file"
+    required: false
+    default: "blastscope.sarif"
+runs:
+  using: "composite"
+  steps:
+    - name: Install BlastScope
+      shell: bash
+      run: pipx install blastscope || pip install blastscope
+    - name: Scan
+      shell: bash
+      run: |
+        POLICY_FLAG=""
+        if [ -n "${{ inputs.policy }}" ]; then POLICY_FLAG="--policy ${{ inputs.policy }}"; fi
+        blastscope scan --config "${{ inputs.config }}" $POLICY_FLAG \
+          --format sarif -o "${{ inputs.sarif-output }}" \
+          --fail-on "${{ inputs.fail-on }}"

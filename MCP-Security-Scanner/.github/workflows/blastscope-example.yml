@@ -1,0 +1,27 @@
+# Example: gate PRs on MCP configuration security and upload findings to the
+# GitHub Security tab. Copy into your repo and adjust paths.
+name: MCP security scan
+on:
+  pull_request:
+    paths: [".mcp.json", ".cursor/**", ".vscode/mcp.json", "mcp-policy.yaml"]
+  workflow_dispatch:
+
+jobs:
+  blastscope:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: BlastScope scan
+        uses: ./action
+        with:
+          config: .mcp.json
+          policy: mcp-policy.yaml
+          fail-on: high
+      - name: Upload SARIF to code scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: blastscope.sarif

@@ -2,77 +2,73 @@
 
 > **See your agent's blast radius before an attacker does.**
 
-Security posture assessment for MCP and agentic AI installations — built by a practising CISO, designed for the people who have to *govern* AI agents, not just deploy them.
+Security posture assessment for MCP and agentic AI installations. BlastScope assesses your **whole installation as a system** — not one server at a time — and catches the composition attacks, misconfigurations, and supply-chain risks that per-server scanners miss. Built by a practising CISO for the people who have to *govern* AI agents, not just run them.
 
-<!-- Badges: add after first release -->
-<!-- [PyPI] [License: Apache-2.0] [CI] [OWASP LLM Top 10 mapped] -->
+Apache-2.0 · Python 3.10+ · local-first, no telemetry
 
-<!-- DEMO GIF HERE: 30s — `blastscope scan` on a messy config → CRITICAL posture → fix two findings → re-scan → clean -->
+<!-- Badges after first release: PyPI · CI · SARIF · OWASP LLM Top 10 · OWASP ASI 2026 -->
+<!-- DEMO GIF: `blastscope scan` on a 3-server config -> CRITICAL trifecta -> fix one leg -> re-scan clean -->
 
 ---
 
-## The problem
+## Why this exists
 
-MCP servers are being installed the way browser toolbars were in 2005: copy a config from a README, restart the client, hope for the best.
+By 2026, MCP is the default way agents connect to tools — and it has become a proven attack surface. The pattern behind nearly every real incident is the same three ingredients in one agent: **access to private data, exposure to untrusted input, and a way to send data out.** Security researchers named it the *lethal trifecta*, and the documented breaches follow it precisely:
 
-Most existing scanners answer a useful question: *"Is this server misconfigured?"* BlastScope answers the question that actually keeps security leaders up at night:
+- A single malicious GitHub issue was enough to make an AI assistant with GitHub MCP access exfiltrate private repository contents — the user only asked it to review open issues.
+- A support ticket containing embedded instructions caused a Cursor agent with privileged database credentials to query an internal tokens table and post the results back into the ticket thread.
+
+Neither attack used malware or a stolen credential. The exploit was written in plain English, and the danger came from the *combination* of otherwise reasonable tools. As one analysis put it, the utility is the vulnerability: agents are useful precisely because they read your data, process outside input, and act on your behalf.
+
+The wider picture reinforces it. Independent 2025–2026 assessments found command injection, path traversal, and SSRF across large fractions of scanned MCP servers; the official signed registry launched in Q1 2026 but most installs still come from unverified community sources and raw GitHub URLs; and named attack classes now include tool poisoning, rug pulls, tool shadowing, cross-server cascades, and confused-deputy OAuth flaws. OWASP codified agent goal hijack as ASI01 in its 2026 Top 10 for Agentic Applications.
+
+Most tooling still asks *"is this one server misconfigured?"* BlastScope asks the question a security leader actually has to answer:
 
 > **"If the model driving this installation is compromised by a single prompt injection, what is the total blast radius — and can I explain it to my board?"**
 
-That is a different question. It's about the **composition** of everything you've installed, not any single server in isolation. A read-only email server is fine. A web fetcher is fine. A webhook poster is fine. Install all three and you've built a data exfiltration pipeline that no per-server scan will ever flag.
+## What makes it different
 
-## Why another scanner? (Honest answer)
-
-Good tools already exist in this space — mcp-scan, agent-audit, agent-audit-kit, Snyk's agent-scan, mcp-audit, and others. If you want per-server rule coverage or code-level SAST of MCP servers, several of those are excellent and you should use them. BlastScope deliberately does not compete on rule count.
-
-What BlastScope does that we haven't found elsewhere:
-
-| Capability | Typical scanner | BlastScope |
+| | Typical MCP scanner | BlastScope |
 |---|---|---|
-| Unit of analysis | One server / one config | **The whole installation, as a system** |
-| Composition risk (cross-server capability chains) | Rare or partial | **Core feature — the "lethal trifecta" and beyond** |
-| Primary output | Findings list / SARIF | **Blast-radius posture + board-ready risk narrative** (SARIF too) |
-| Written for | AppSec engineers | **Security leaders AND safe experimenters** |
-| Risk framing | Rule-based severity | **Severity × exploitability × blast radius, with business-impact language** |
+| Unit of analysis | one server / one config | **the whole installation, as a system** |
+| Composition risk (cross-server chains) | rare or partial | **core feature — lethal trifecta + excessive agency** |
+| Frameworks covered | MCP only | **MCP, OpenAI function-calling, LangChain** |
+| Primary output | findings list | **severity posture + board-ready narrative + SARIF + AI-BOM** |
+| Governance mapping | severity only | **OWASP LLM Top 10, OWASP ASI 2026, MITRE ATLAS, NIST AI RMF** |
+| Org policy | — | **policy-as-code baselines with capability-combination bans** |
+| Written for | AppSec engineers | **security leaders AND safe experimenters** |
 
-If your reaction is "a findings list is enough for me" — genuinely, use one of the tools above. If you've ever had to stand in front of a risk committee and explain what your organisation's AI agents can actually *do*, keep reading.
+Good per-server tools exist (mcp-scan, agent-audit, Snyk, and others) and BlastScope doesn't compete on raw rule count. Run one of those alongside it for deep per-server coverage. BlastScope owns the layer they don't: **what your installation can do as a whole.**
 
 ## Quick start
 
 ```bash
 pipx install blastscope
 
-# Scan whatever MCP clients are installed on this machine (auto-detected)
+# Scan whatever MCP clients are installed (auto-detected)
 blastscope scan
 ```
 
-Sixty seconds later:
-
 ```
-BlastScope v0.5 — Installation Assessment
+BlastScope — Installation Assessment
 ──────────────────────────────────────────
-Clients found:   Claude Desktop, Cursor
-Servers found:   7        Tools exposed: 43
+Clients scanned : Claude Desktop, Cursor
+Servers found   : 7        Tools declared: 43
 
   POSTURE:  CRITICAL          11 findings
 
-  ⛔ TRIFECTA DETECTED (Critical)
-     Your installation combines:
-       • Private data access ......... gmail-mcp (read_email)
-       • Untrusted content ingress ... web-fetch (fetch_url)
-       • Exfiltration path ........... hooks-mcp (post_webhook)
-     A single successful prompt injection in ANY fetched web page
-     can read your email and send it to an attacker-controlled URL.
-     → Remediation: isolate web-fetch into a separate client profile,
-       or constrain post_webhook with a URL allow-list.
+  CRITICAL  Lethal trifecta present across installation
+     private data ....... gmail (read_email)
+     untrusted input .... web-fetch (fetch_url)
+     exfiltration ....... hooks (post_webhook)
+     A single prompt injection in any fetched page can read your
+     email and post it to an attacker-controlled URL.
+     Fix: sever one leg — isolate web-fetch, or allow-list the webhook.
 
-  🔴 3 Critical   🟠 5 High   🟡 6 Medium   (blastscope report for detail)
-
-  One-line verdict: this setup can read your email and post it
-  anywhere on the internet. Treat as Critical until remediated.
+  3 critical · 5 high · 6 medium · 1 low
 ```
 
-Check a server **before** you install it:
+Check a server **before** you install it — the pre-install seatbelt:
 
 ```bash
 blastscope inspect npx:@vendor/mcp-server-foo
@@ -81,105 +77,153 @@ blastscope inspect https://mcp.vendor.example/sse
 
 ## What it detects
 
-Twelve risk classes, shipped as versioned, user-extensible YAML rule packs. Every finding carries evidence, plain-English explanation, remediation, and mappings to **OWASP LLM Top 10, MITRE ATLAS, and NIST AI RMF**.
+Deterministic, explainable, framework-mapped. Twelve risk classes: eight ship as versioned YAML rule packs (community-extensible), and four are engine-driven because they reason across the whole installation.
 
-| ID | Risk class | One-liner |
-|----|-----------|-----------|
-| R1 | Tool poisoning | Hidden/manipulative instructions in tool names and descriptions (incl. invisible Unicode, encoded blobs) |
-| R2 | Injection surface | Tools that pipe untrusted external content into model context |
-| R3 | **Lethal trifecta** | Private data + untrusted content + exfiltration path, assessed **across servers** |
-| R4 | Over-permissioning | Write/exec where read suffices; wildcard scopes; filesystem roots |
-| R5 | Rug pull | Tool definitions that can silently change after approval (baseline hashing + drift detection) |
-| R6 | Tool shadowing | Name collisions and call-interception across installed servers |
-| R7 | Credential exposure | Secrets in plaintext configs, args, and manifests |
-| R8 | Transport & auth | Unauthenticated remote servers, missing TLS, weak session binding |
-| R9 | Destructive actions | Irreversible tools (delete/send/pay) with no confirmation semantics |
-| R10 | Supply chain | Unpinned versions, unverifiable publishers, install-time scripts |
-| R11 | Exfiltration vectors | Arbitrary-URL parameters, unbounded egress, writes to public locations |
-| R12 | **Excessive agency (composition)** | Aggregate blast radius of the full installed set |
+| ID | Risk class | Detects | Engine |
+|----|-----------|---------|--------|
+| R1 | Tool poisoning | Hidden/manipulative instructions in tool names & descriptions (incl. invisible Unicode, encoded blobs) | YAML |
+| R2 | Injection surface | Tools that pipe untrusted external content (web, issues, tickets, email) into context | YAML |
+| **R3** | **Lethal trifecta** | **Private data + untrusted input + exfil path, assessed across servers** | **composition** |
+| R4 | Over-permissioning | Root/home filesystem grants, shell wrappers, arbitrary-URL tools | YAML |
+| **R5** | **Rug pull** | **Tool definitions that silently change after approval (baseline hashing + drift)** | **baseline** |
+| R7 | Credential exposure | Live secrets in configs, args, and URLs (entropy + known formats), redacted in output | YAML |
+| R8 | Transport & auth | Unauthenticated remote servers, plaintext HTTP, weak session binding | YAML |
+| R9 | Destructive actions | Irreversible tools (delete/send/pay/deploy) with no confirmation semantics | YAML |
+| R10 | Supply chain | Unpinned versions, remote-URL execution, auto-confirm install flags | YAML |
+| R11 | Exfiltration vectors | Caller-controlled URLs, writes to public locations | YAML |
+| **R12** | **Excessive agency** | **Injection-to-destruction chains + aggregate blast-radius surface** | **composition** |
 
-R3 and R12 are why this project exists. Everything else is table stakes done properly.
+Findings map to **OWASP LLM Top 10, OWASP ASI 2026 (agentic), MITRE ATLAS, and NIST AI RMF** so one report speaks to engineers and risk committees at once.
+
+## The composition engine (R3 + R12)
+
+This is the core idea. BlastScope reduces every tool to the capabilities it grants — `private_data`, `untrusted_input`, `exfiltration`, `destructive` — then reasons over the union across all installed servers.
+
+Three servers that each look harmless in isolation:
+
+```
+personal-notes   -> private_data
+research          -> untrusted_input
+notifier          -> exfiltration
+```
+
+…combine into a complete exfiltration pipeline. R3 fires **critical** with the full evidence chain, because severing any one leg breaks the attack. No per-server scanner can produce this finding — the risk doesn't live in any single server. Try it: `blastscope scan --config examples/trifecta_config.json`.
 
 ## For security teams
 
 ```bash
-# CI gate: fail the build on high-severity findings
-blastscope scan --fail-on high
+# Assess against an organisational policy baseline
+blastscope scan --policy corp-policy.yaml
 
-# Live handshake — enumerate real tools/resources/prompts, not just declared config
-blastscope scan --live
+# CI gate + SARIF into the GitHub Security tab
+blastscope scan --format sarif -o results.sarif --fail-on high
 
-# Record a rug-pull baseline now, then re-run on a schedule (cron/CI) to catch drift
-blastscope scan --baseline
+# Board-ready HTML narrative for your GRC pack
+blastscope scan --format html -o ai-agent-risk.html
+
+# Continuous rug-pull / drift monitoring
 blastscope watch
 
-# Pre-install check before anything touches a client config
-blastscope inspect npx:@vendor/mcp-server-foo
-
-# The one your CISO actually wants:
-blastscope scan --format html -o ai-agent-risk.html
+# AI-BOM: a bill of materials for your agent's capability surface
+blastscope export -o ai-bom.json
 ```
 
-`--format html` produces a one-page narrative report: what the installation can do, what the realistic attack path is, and the top remediations — written in risk-register language, not stack traces. See [`examples/sample-report.html`](examples/sample-report.html) for a full sample, or the screenshot below. Drop it into your GRC pack as-is.
+`--format html` produces a one-page narrative report: what the installation can do, the realistic attack path, and top remediations — written in risk-register language, not stack traces. Drop it into your GRC pack as-is.
 
 ![Sample boardroom report](examples/sample-boardroom-report.png)
 
-A policy engine (org-defined capability rules, `blastscope scan --policy corp-baseline.yaml`) and SARIF output for the GitHub Security tab are planned for v1.0 — see [Roadmap](#roadmap).
+**Policy-as-code.** Express rules generic scanning can't know — approved servers, banned capability *combinations*, mandatory hygiene:
 
-## For experimenters
+```yaml
+# corp-policy.yaml
+version: 1
+allow_servers: ["@modelcontextprotocol/*", "@internal/*"]
+deny_capability_combinations:
+  - [private_data, exfiltration]      # no trifecta components in one install
+  - [untrusted_input, destructive]
+require:
+  version_pinning: true
+  no_plaintext_secrets: true
+  https_only: true
+max_severity: medium                   # residual-risk ceiling
+```
 
-You don't need a security team to use this. If you're learning MCP, building agents, or following along with agentic AI content, BlastScope is the seatbelt:
+**GitHub Action.** Drop-in CI, findings upload to code scanning:
 
-- **Zero config.** `blastscope scan` finds your clients and just works.
-- **Plain English.** Every finding explains *why it matters* and *what to do*, no security background assumed.
-- **Pre-install checks.** `blastscope inspect <server>` before you paste anything into your config.
-- **Nothing leaves your machine.** See below.
+```yaml
+- uses: ./action                       # or Kuizinass/blastscope-action@v1
+  with:
+    config: .mcp.json
+    policy: mcp-policy.yaml
+    fail-on: high
+- uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: blastscope.sarif
+```
 
-## Design principles
+**AI-BOM.** A machine-readable inventory of every server, tool, and classified capability with provenance — governance evidence for audits and DDQs, and a change-review tool: diff two exports to see exactly what an installation gained between approvals.
 
-1. **Local-first, no telemetry, no phone-home.** Static analysis runs fully offline. Nothing about your configuration is ever transmitted. This is a security tool; it behaves like one.
-2. **Deterministic first.** Core detection is rule-based: same input, same findings, no model in the loop. An *optional* LLM semantic pass (for subtle manipulative language in tool descriptions) exists behind an explicit flag with your own API key, and its findings are labelled heuristic.
-3. **Handshake with consent.** Live inspection of stdio servers means executing them. BlastScope shows you the exact command and asks first, every time. Scanning untrusted servers should be done in a sandbox — the docs show you how.
-4. **Explainable or it doesn't ship.** Every finding cites its rule, its evidence, and its framework mapping. No black-box scores.
-5. **Honest limitations.** BlastScope assesses capability surface, not server source code (use a SAST tool for that), and a CLEAN result means "no known risk patterns detected", not "safe".
+## Framework portability
 
-## Framework support
+The same rule engine and composition analysis run over any agent framework via a normalised capability model.
 
 | Source | Status |
 |--------|--------|
-| MCP client configs (Claude Desktop / Claude Code, Cursor, VS Code, Windsurf, `--config <path>`) | ✅ v0.1 |
-| MCP live handshake (tool/resource/prompt enumeration) | ✅ v0.5 |
-| OpenAI function-calling schemas | 🔜 v1.0 |
-| LangChain tool definitions | 🔜 v1.0 |
-| CrewAI / AutoGen | Planned |
-| Adapter plugin API (bring your own framework, <100 lines) | 🔜 v1.0 |
+| MCP client configs (Claude Desktop/Code, Cursor, VS Code, Windsurf, `--config`) | done |
+| MCP live handshake (executes server to enumerate real tools; asks first) | done |
+| OpenAI function-calling schemas (`--openai-tools`) | done |
+| LangChain tools — JSON export or live `BaseTool` objects in-process | done |
+| CrewAI / AutoGen | planned |
+| Adapter plugin API (bring your own framework) | documented |
 
-All adapters normalise into one internal capability model; the rule engine is framework-agnostic by construction.
+The trifecta fires identically on an OpenAI tools file as on an MCP config — the risk is architectural, not protocol-specific.
+
+## Optional LLM semantic pass
+
+Deterministic rules catch known patterns. An **opt-in** LLM pass (`--llm`, your own `ANTHROPIC_API_KEY`) catches subtly manipulative language that regex can't — priority demands, disguised instructions, social engineering in tool descriptions. It sends **only tool names and descriptions**, never env vars, credentials, args, or URLs; every finding it produces is labelled `[heuristic]`; and deterministic detection never depends on it. Off unless you ask for it.
+
+## Design principles
+
+1. **Local-first, no telemetry, no phone-home.** Static analysis runs fully offline; nothing about your configuration is transmitted. The only network path is the explicit, opt-in `--llm` pass.
+2. **Deterministic first.** Core detection is rule-based — same input, same findings.
+3. **Handshake with consent.** Live inspection executes the server; BlastScope shows the exact command and asks first. Sandbox untrusted servers (the docs show how).
+4. **Explainable or it doesn't ship.** Every finding cites its rule, evidence, remediation, and framework mapping. No black-box scores.
+5. **Honest limitations.** BlastScope assesses capability surface and configuration, not server source code — pair it with a SAST/CVE scanner for the code layer. Capability classification is signal-based and can occasionally over- or under-tag; the evidence is always shown so you can judge. A clean result means "no known patterns detected", not "safe".
+
+## Install
+
+```bash
+pipx install blastscope     # recommended
+pip install blastscope      # or plain pip
+```
+
+From source:
+
+```bash
+git clone https://github.com/Kuizinass/AI-Projects.git
+cd AI-Projects/MCP-Security-Scanner
+pip install -e .
+pytest
+```
 
 ## Roadmap
 
-- **v0.1** — static config scanning, R1/R4/R7/R9/R10, severity-based posture, terminal + JSON ✅
-- **v0.5 (current)** — live handshake, composition engine (R3/R12), R2/R5/R8/R11 rules, `inspect` pre-install check, rug-pull drift baselines, HTML boardroom report
-- **v1.0** — policy engine, SARIF + GitHub Action, OpenAI/LangChain adapters, optional LLM pass
-- **Beyond** — runtime guardrail mode reusing the same rule engine, community rule registry, AI-BOM export
+- **v0.1** — static config scanning, R1/R4/R7/R9/R10, severity posture, terminal + JSON (done)
+- **v0.5** — live handshake, composition engine (R3/R12), R2/R5/R8/R11, `inspect`, drift baselines, HTML report (done)
+- **v1.0 (current)** — policy-as-code, SARIF + GitHub Action, OpenAI/LangChain adapters, optional LLM pass, AI-BOM export (done)
+- **Next** — runtime guardrail mode reusing the rule engine, community rule registry, CrewAI/AutoGen adapters, signed rule packs, official MCP registry provenance checks
 
 ## Threat model
 
-The full threat model this tool is built against — what we assume about attackers, clients, and servers — lives in [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md). Read it before trusting any scanner, including this one.
+The full threat model — assumptions about attackers, clients, and servers, and what BlastScope can and cannot see — lives in [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md). Read it before trusting any scanner, including this one.
 
 ## Contributing
 
-Rule packs are plain YAML — contributing a detection doesn't require touching engine code. See [`CONTRIBUTING.md`](CONTRIBUTING.md). Good first issues are tagged.
+Rule packs are plain YAML — a new detection needs no engine code. Composition and capability logic live in `composition.py` / `capabilities.py`. Every rule must fire on the vulnerable fixture and stay silent on the clean one. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## About
 
-Built by **Marius Poskus** — Global VP of Cybersecurity / CISO at an FCA-regulated FinTech, 14 years in security, and creator of **CTRL+ALT+DEFEND** (cybersecurity career education, 60K+ across platforms).
-
-I evaluate agentic AI the way I evaluate any privileged system, because that's what it is. BlastScope is that evaluation, automated.
-
-- LinkedIn: [linkedin.com/in/YOURHANDLE]
-- YouTube / TikTok: @ctrlaltdefend
-- Consulting: [mpcybersecurity.co.uk]
+Built by **Marius Poskus** — Global VP of Cybersecurity / CISO at an FCA-regulated FinTech, 14 years in security, and creator of **CTRL+ALT+DEFEND** (cybersecurity career education). I evaluate agentic AI the way I evaluate any privileged system, because that's what it is. BlastScope is that evaluation, automated.
 
 ## License
 
@@ -187,4 +231,4 @@ Apache-2.0
 
 ---
 
-*BlastScope provides visibility, not guarantees. Use it alongside runtime controls, sandboxing, and your own judgement.*
+*BlastScope provides visibility, not guarantees. Use it alongside runtime controls, sandboxing, and human judgement.*

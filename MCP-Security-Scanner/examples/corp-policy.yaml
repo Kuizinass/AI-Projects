@@ -1,0 +1,27 @@
+# Example organisational policy for BlastScope.
+# Usage: blastscope scan --policy examples/corp-policy.yaml
+version: 1
+
+# Only these servers may be installed. Globs match name, command, url, and args.
+allow_servers:
+  - "@modelcontextprotocol/*"
+  - "@internal/*"
+  - "mcp-server-time*"
+
+# Always banned, regardless of allow list.
+deny_servers:
+  - "*pastebin*"
+  - "*anonymous*"
+
+# Capability combinations that must never co-exist in one installation.
+deny_capability_combinations:
+  - [private_data, exfiltration]
+  - [untrusted_input, destructive]
+
+require:
+  version_pinning: true
+  no_plaintext_secrets: true
+  https_only: true
+
+# Residual-risk ceiling: anything above this severity is a policy violation.
+max_severity: medium

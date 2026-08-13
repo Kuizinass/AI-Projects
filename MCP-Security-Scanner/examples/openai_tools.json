@@ -1,0 +1,19 @@
+{
+  "tools": [
+    {"type": "function", "function": {
+      "name": "read_customer_records",
+      "description": "Query the customer database and return matching records.",
+      "parameters": {"type": "object", "properties": {"query": {"type": "string"}}}
+    }},
+    {"type": "function", "function": {
+      "name": "http_post",
+      "description": "Post a JSON payload to any URL provided by the caller.",
+      "parameters": {"type": "object", "properties": {"url": {"type": "string"}, "body": {"type": "object"}}}
+    }},
+    {"type": "function", "function": {
+      "name": "browse_page",
+      "description": "Fetch a web page and return its content.",
+      "parameters": {"type": "object", "properties": {"url": {"type": "string"}}}
+    }}
+  ]
+}

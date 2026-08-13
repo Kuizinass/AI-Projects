@@ -55,19 +55,33 @@ def main() -> None:
               help="Also scan a tool-manifest JSON file (repeatable).")
 @click.option("--rules-dir", "rules_dirs", multiple=True, type=click.Path(exists=True, path_type=Path),
               help="Load additional YAML rule packs from a directory (repeatable).")
+@click.option("--openai-tools", "openai_files", multiple=True, type=click.Path(exists=True, path_type=Path),
+              help="Also assess an OpenAI function-calling tools JSON file (repeatable).")
+@click.option("--langchain-export", "langchain_files", multiple=True, type=click.Path(exists=True, path_type=Path),
+              help="Also assess a LangChain tools JSON export (repeatable).")
 @click.option("--live", is_flag=True, help="Handshake with stdio servers to enumerate real tools (executes them; asks first).")
-@click.option("--format", "fmt", type=click.Choice(["terminal", "json", "html"]), default="terminal")
+@click.option("--policy", "policy_file", type=click.Path(exists=True, path_type=Path),
+              help="Evaluate the installation against an organisational policy YAML.")
+@click.option("--llm", "llm_pass", is_flag=True,
+              help="Optional LLM semantic pass on tool descriptions (BYO ANTHROPIC_API_KEY; heuristic; sends tool names+descriptions only).")
+@click.option("--format", "fmt", type=click.Choice(["terminal", "json", "html", "sarif"]), default="terminal")
 @click.option("-o", "--output", type=click.Path(path_type=Path), help="Write output to a file.")
 @click.option("--fail-on", type=click.Choice(["critical", "high", "medium", "low"]),
               help="Exit non-zero if findings at/above this severity exist (CI gate).")
 @click.option("--baseline", is_flag=True, help="Record/update the rug-pull baseline during this scan.")
 @click.option("--baseline-path", type=click.Path(path_type=Path), help="Custom baseline file location.")
 @click.option("--summary-only", is_flag=True, help="Posture and verdict only, no per-finding detail.")
-def scan(configs, manifests, rules_dirs, live, fmt, output, fail_on,
-         baseline, baseline_path, summary_only) -> None:
+def scan(configs, manifests, rules_dirs, openai_files, langchain_files, live, policy_file,
+         llm_pass, fmt, output, fail_on, baseline, baseline_path, summary_only) -> None:
     """Scan MCP client configs on this machine (or given via --config)."""
     inst = build_installation(list(configs) or None, list(manifests) or None,
-                              auto_discover=not configs)
+                              auto_discover=not (configs or openai_files or langchain_files))
+    for f in openai_files:
+        from blastscope.adapters.openai_tools import parse_openai_tools_file
+        inst.servers.append(parse_openai_tools_file(f))
+    for f in langchain_files:
+        from blastscope.adapters.langchain_tools import parse_langchain_export
+        inst.servers.append(parse_langchain_export(f))
     if not inst.servers:
         console.print("[yellow]No MCP servers found.[/yellow] "
                       "Point me at a config with --config <path>.")
@@ -76,7 +90,31 @@ def scan(configs, manifests, rules_dirs, live, fmt, output, fail_on,
     findings, assessment = _run_scan(inst, rules_dirs, live,
                                      update_baseline=baseline, baseline_path=baseline_path)
 
-    if fmt == "json":
+    if policy_file:
+        from blastscope.policy import load_policy, evaluate_policy
+        from blastscope.scoring import assess as _assess
+        violations = evaluate_policy(inst, load_policy(policy_file), scan_findings=findings)
+        findings = sorted(findings + violations,
+                          key=lambda x: (-x.severity.rank, x.server, x.rule_id))
+        assessment = _assess(findings)
+
+    if llm_pass:
+        from blastscope.llm_pass import run_llm_pass
+        from blastscope.scoring import assess as _assess
+        try:
+            heuristic = run_llm_pass(inst)
+            if heuristic:
+                findings = sorted(findings + heuristic,
+                                  key=lambda x: (-x.severity.rank, x.server, x.rule_id))
+                assessment = _assess(findings)
+            console.print(f"[dim]LLM pass: {len(heuristic)} heuristic finding(s)[/dim]")
+        except RuntimeError as e:
+            console.print(f"[yellow]LLM pass skipped:[/yellow] {e}")
+
+    if fmt == "sarif":
+        from blastscope.reporters import sarif_out
+        _emit(sarif_out.render(inst, findings, assessment), output)
+    elif fmt == "json":
         payload = json_out.render(inst, findings, assessment)
         _emit(payload, output)
     elif fmt == "html":
@@ -187,6 +225,40 @@ def _emit(payload: str, output: Path | None) -> None:
         console.print(f"Wrote {output}")
     else:
         click.echo(payload)
+
+
+
+
+@main.command()
+@click.option("--config", "configs", multiple=True, type=click.Path(exists=True, path_type=Path))
+@click.option("--manifest", "manifests", multiple=True, type=click.Path(exists=True, path_type=Path))
+@click.option("--openai-tools", "openai_files", multiple=True, type=click.Path(exists=True, path_type=Path))
+@click.option("--langchain-export", "langchain_files", multiple=True, type=click.Path(exists=True, path_type=Path))
+@click.option("--live", is_flag=True, help="Enumerate real tools via handshake before exporting.")
+@click.option("-o", "--output", type=click.Path(path_type=Path))
+def export(configs, manifests, openai_files, langchain_files, live, output) -> None:
+    """Export an AI-BOM: the full capability surface of your installation.
+
+    A machine-readable inventory of every server, tool, and classified capability
+    — governance evidence for audits, DDQs, and change review. Diff two exports
+    to see exactly what an installation gained between approvals.
+    """
+    from blastscope.aibom import render as render_aibom
+    inst = build_installation(list(configs) or None, list(manifests) or None,
+                              auto_discover=not (configs or openai_files or langchain_files))
+    for f in openai_files:
+        from blastscope.adapters.openai_tools import parse_openai_tools_file
+        inst.servers.append(parse_openai_tools_file(f))
+    for f in langchain_files:
+        from blastscope.adapters.langchain_tools import parse_langchain_export
+        inst.servers.append(parse_langchain_export(f))
+    if not inst.servers:
+        console.print("[yellow]No MCP servers found.[/yellow]")
+        sys.exit(0)
+    if live:
+        from blastscope.adapters.mcp_live import enrich_installation
+        enrich_installation(inst, consent=_consent_prompt)
+    _emit(render_aibom(inst), output)
 
 
 if __name__ == "__main__":
