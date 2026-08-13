@@ -6,6 +6,8 @@ Security posture assessment for MCP and agentic AI installations. BlastScope ass
 
 Apache-2.0 · Python 3.10+ · local-first, no telemetry
 
+[Usage guide](docs/USAGE-GUIDE.md) · [Threat model](docs/THREAT-MODEL.md)
+
 <!-- Badges after first release: PyPI · CI · SARIF · OWASP LLM Top 10 · OWASP ASI 2026 -->
 <!-- DEMO GIF: `blastscope scan` on a 3-server config -> CRITICAL trifecta -> fix one leg -> re-scan clean -->
 
@@ -212,6 +214,10 @@ pytest
 - **v0.5** — live handshake, composition engine (R3/R12), R2/R5/R8/R11, `inspect`, drift baselines, HTML report (done)
 - **v1.0 (current)** — policy-as-code, SARIF + GitHub Action, OpenAI/LangChain adapters, optional LLM pass, AI-BOM export (done)
 - **Next** — runtime guardrail mode reusing the rule engine, community rule registry, CrewAI/AutoGen adapters, signed rule packs, official MCP registry provenance checks
+
+## Usage guide
+
+A full, task-oriented walkthrough — every command, policy-as-code, CI/CD integration, drift monitoring, non-MCP frameworks, custom rules, and common workflows — lives in [`docs/USAGE-GUIDE.md`](docs/USAGE-GUIDE.md).
 
 ## Threat model
 
